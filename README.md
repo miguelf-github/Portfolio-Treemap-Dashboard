@@ -1,8 +1,8 @@
-# Portfolio Treemap Dashboard
+# Google Sheets Stock Portfolio Treemap Dashboard
 
 A self-contained, live-updating portfolio treemap dashboard. Pulls data from
 Google Sheets in real time and renders holdings as proportionally-sized,
-color-coded pills grouped by sleeve — with hover tooltips, dark mode, and
+color-coded pills grouped by sleeve with hover tooltips, dark mode, and
 scorecards for value, gain, dividends, and fees.
 
 **No build tools, no dependencies — just one HTML file.**
