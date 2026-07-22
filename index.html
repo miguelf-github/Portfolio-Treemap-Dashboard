@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio Dashboard — Live Treemap</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --color-background-primary: #ffffff;
+    --color-background-secondary: #f4f3ef;
+    --color-text-primary: #1a1a18;
+    --color-text-secondary: #6b6b66;
+    --color-border-tertiary: rgba(0,0,0,0.12);
+    --color-border-secondary: rgba(0,0,0,0.22);
+    --border-radius-md: 8px;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-background-primary: #1c1c1a;
+      --color-background-secondary: #252523;
+      --color-text-primary: #f0efe9;
+      --color-text-secondary: #9a9990;
+      --color-border-tertiary: rgba(255,255,255,0.1);
+      --color-border-secondary: rgba(255,255,255,0.2);
+    }
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--color-background-primary);
+    color: var(--color-text-primary);
+    padding: 24px 20px 32px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  h1 { font-size: 17px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 3px; }
+  .subtitle { font-size: 12px; color: var(--color-text-secondary); }
+  .refresh-btn {
+    font-size: 12px; padding: 6px 12px; border-radius: 6px; border: 0.5px solid var(--color-border-secondary);
+    background: var(--color-background-secondary); color: var(--color-text-primary);
+    cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .refresh-btn:hover { opacity: 0.8; }
+  .refresh-btn .spin { display: inline-block; }
+  .refresh-btn.loading .spin { animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .account-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .account-tab {
+    font-size: 12px; font-weight: 500; padding: 7px 14px; border-radius: 999px;
+    border: 0.5px solid var(--color-border-secondary);
+    background: var(--color-background-secondary); color: var(--color-text-secondary);
+    cursor: pointer; transition: all 0.15s ease;
+  }
+  .account-tab:hover { opacity: 0.8; }
+  .account-tab.active {
+    background: var(--color-text-primary); color: var(--color-background-primary);
+    border-color: var(--color-text-primary);
+  }
+
+  .status { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 14px; }
+  .status.error { color: #A32D2D; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 14px; }
+  .card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 14px; }
+  .card-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 5px; line-height: 1.3; }
+  .card-value { font-size: 20px; font-weight: 500; color: var(--color-text-primary); line-height: 1.1; }
+  .card-sub { font-size: 11px; color: var(--color-text-secondary); margin-top: 3px; }
+  .pos { color: #3B6D11; }
+  .neg { color: #A32D2D; }
+
+  .divider { height: 0.5px; background: var(--color-border-tertiary); margin-bottom: 14px; }
+
+  .tm-grid { display: grid; gap: 6px; padding: 0 0 8px; }
+  .group-block { border-radius: 10px; overflow: hidden; }
+  .group-header { padding: 7px 10px 5px; display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px; }
+  .group-name { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.95); }
+  .group-meta { font-size: 11px; color: rgba(255,255,255,0.65); }
+  .holdings-row { display: flex; gap: 3px; padding: 0 4px 4px; }
+  .holdings-row.scrollable {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 8px;
+  }
+  .holdings-row.scrollable .holding { flex: 0 0 64px; }
+  .holdings-row.scrollable::-webkit-scrollbar { height: 4px; }
+  .holdings-row.scrollable::-webkit-scrollbar-thumb { background: var(--color-border-secondary); border-radius: 4px; }
+  .holding { border-radius: 6px; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; min-width: 52px; flex: 1; cursor: default; }
+  .h-ticker { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.97); line-height: 1; }
+  .h-pct { font-size: 11px; color: rgba(255,255,255,0.62); line-height: 1; }
+  .ret-pos { color: #7ce3b0; }
+  .ret-neg { color: #f7a5a5; }
+
+  .tip {
+    position: fixed; background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md); padding: 10px 13px;
+    font-size: 12px; pointer-events: none; z-index: 99; min-width: 190px;
+    color: var(--color-text-primary); display: none; line-height: 1.8;
+  }
+
+  .legend-row { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 6px 0 2px; }
+  .leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--color-text-secondary); }
+  .leg-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+  .skeleton { background: var(--color-background-secondary); border-radius: 10px; height: 70px; animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+</style>
+</head>
+<body>
+
+<!-- ─── ACCOUNT CONFIG ──────────────────────────────────────
+     Add/remove accounts here. Each needs a name, its spreadsheet ID
+     (the string between /d/ and /edit in the sheet URL), and its tab's
+     GID (the number after gid= when on the correct tab).
+──────────────────────────────────────────────────────────── -->
+<script>
+  const ACCOUNTS = [
+    { name: "Traditional IRA", sheetId: "1QXxJ-rH0fX6qhJXTXo-Xh5h5gmDvZXfgZqal2hzd-m0", gid: "374061404" },
+  ];
+</script>
+<!-- ──────────────────────────────────────────────────────── -->
+
+<div class="header">
+  <div>
+    <h1 id="pageTitle">Portfolio Dashboard</h1>
+    <p class="subtitle" id="subtitle">Loading live data…</p>
+  </div>
+  <button class="refresh-btn" id="refreshBtn" onclick="loadData()">
+    <span class="spin">↻</span> Refresh
+  </button>
+</div>
+
+<div class="account-tabs" id="accountTabs"></div>
+
+<div class="status" id="status"></div>
+<div class="cards" id="scorecards"></div>
+<div class="divider" id="divider" style="display:none"></div>
+<div class="tm-grid" id="grid">
+  <div class="skeleton"></div>
+  <div class="skeleton"></div>
+  <div class="skeleton"></div>
+  <div class="skeleton"></div>
+</div>
+<div class="legend-row" id="legend"></div>
+<div class="tip" id="tip"></div>
+
+<script>
+let activeAccountIdx = 0;
+
+// ── Sleeve colors keyed by the sheet's Order column (1–10), so the same
+// slot number always renders the same color across every account/sleeve. ──
+const ORDER_COLORS = {
+  1:  { color:"#185FA5", bg:"#0C447C" }, // broad market / indices
+  2:  { color:"#534AB7", bg:"#3C3489" }, // tech / semis / AI
+  3:  { color:"#854F0B", bg:"#633806" }, // covered calls / income
+  4:  { color:"#993C1D", bg:"#712B13" }, // speculative / growth
+  5:  { color:"#5F5E5A", bg:"#444441" }, // small cap / bonds / cash
+  6:  { color:"#3B6D11", bg:"#27500A" }, // dividend equity
+  7:  { color:"#1D9E75", bg:"#0F6E56" }, // REIT / real estate
+  8:  { color:"#0F6E56", bg:"#085041" }, // international
+  9:  { color:"#7F77DD", bg:"#534AB7" }, // MAG 7 / mega-cap growth
+  10: { color:"#888780", bg:"#5F5E5A" }, // precious metals / alternatives
+  11: { color:"#6B4E9E", bg:"#4C3670" }, // muted violet
+  12: { color:"#B8860B", bg:"#8C6508" }, // muted gold
+};
+const DEFAULT_COLORS = ["#185FA5","#3B6D11","#993C1D","#534AB7","#854F0B","#0F6E56","#5F5E5A","#1D9E75"];
+let colorIdx = 0;
+const sleeveColorCache = {};
+function getSleeveColors(sleeveName, order) {
+  // Prefer a stable cache key on the Order number itself — this guarantees Order 1 is
+  // always the same color everywhere, even if the sleeve name at that slot changes.
+  const cacheKey = ORDER_COLORS[order] ? ('order:' + order) : ('name:' + sleeveName);
+  if (sleeveColorCache[cacheKey]) return sleeveColorCache[cacheKey];
+  const byOrder = ORDER_COLORS[order];
+  const result = byOrder ? byOrder
+                          : (() => { const c = DEFAULT_COLORS[colorIdx % DEFAULT_COLORS.length]; colorIdx++; return { color: c, bg: c + "cc" }; })();
+  sleeveColorCache[cacheKey] = result;
+  return result;
+}
+
+// ── Formatters ────────────────────────────────────────────
+function fmt$(n){ return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtK(n){ return n>=1000?'$'+(n/1000).toFixed(2)+'k':fmt$(n); }
+function retStr(r){ return `<span class="${r>=0?'ret-pos':'ret-neg'}">${r>=0?'+':''}${(r*100).toFixed(2)}%</span>`; }
+
+// ── Account tabs ──────────────────────────────────────────
+function renderTabs() {
+  const tabs = document.getElementById('accountTabs');
+  if (ACCOUNTS.length <= 1) {
+    tabs.style.display = 'none';
+    tabs.innerHTML = '';
+    return;
+  }
+  tabs.style.display = 'flex';
+  tabs.innerHTML = ACCOUNTS.map((a, i) =>
+    `<button class="account-tab ${i===activeAccountIdx?'active':''}" onclick="switchAccount(${i})">${a.name}</button>`
+  ).join('');
+}
+function switchAccount(i) {
+  if (i === activeAccountIdx) return;
+  activeAccountIdx = i;
+  renderTabs();
+  document.getElementById('pageTitle').textContent = ACCOUNTS[i].name;
+  document.getElementById('grid').innerHTML = `
+    <div class="skeleton"></div><div class="skeleton"></div>
+    <div class="skeleton"></div><div class="skeleton"></div>`;
+  document.getElementById('divider').style.display = 'none';
+  loadData();
+}
+
+// ── Main render ───────────────────────────────────────────
+function render(rows) {
+  // Sheet columns (A-O): Description (Sleeve), Ticker, Weight, Shares, Worth, Avg Cost,
+  // Div Yield, Div Growth, Type, Dividend, Link, Return, Account (skip), Expense Ratio, Order
+  const bySleeve = new Map();
+
+  // Forward-fill blank Description cells (common when a sleeve name is visually
+  // merged across rows in the sheet, which leaves the underlying cells empty)
+  // and normalize whitespace so identical sleeve names always group together.
+  let lastSleeve = "Uncategorized";
+  rows.forEach(r => {
+    let sleeve = (r["Description"] || "").toString().replace(/\s+/g, " ").trim();
+    if (sleeve) { lastSleeve = sleeve; } else { sleeve = lastSleeve; }
+    r.__sleeve = sleeve;
+  });
+
+  rows.forEach(r => {
+    const sleeve = r.__sleeve;
+    const ticker = r["Ticker"] || "";
+    const worth  = parseFloat(r["Worth"]) || 0;
+    const cost   = parseFloat(r["AvgCost"])  || 0;
+    const ret    = parseFloat(r["Return"]) || 0;
+    const weight = parseFloat(r["Weight"]) || 0;
+    // "Dividend" col is a pre-calculated projected annual dollar amount
+    const divs   = parseFloat(r["Dividend"]) || 0;
+    // "Expense Ratio" col is already a pre-calculated dollar amount
+    const fees   = parseFloat(r["ExpenseRatio"]) || 0;
+
+    if (!bySleeve.has(sleeve)) {
+      bySleeve.set(sleeve, { name: sleeve, worth:0, cost:0, divs:0, fees:0, weight:0, order: Infinity, h: [] });
+    }
+    const g = bySleeve.get(sleeve);
+    g.worth  += worth;
+    g.cost   += cost;
+    g.divs   += divs;
+    g.fees   += fees;
+    g.weight += weight;
+    const order = parseFloat(r["Order"]);
+    if (!isNaN(order) && order < g.order) g.order = order;
+    // store per-holding detail so tooltips show THIS position's own figures,
+    // not the sleeve-level totals
+    g.h.push({ t: ticker, p: weight * 100, w: worth, cost, ret, divs, fees });
+  });
+
+  const groups = Array.from(bySleeve.values()).map(g => {
+    const clr = getSleeveColors(g.name, g.order);
+    // Highest-weighted holding first, descending within each sleeve
+    const h = [...g.h].sort((a,b) => b.p - a.p);
+    return { ...g, h, color: clr.color, bg: clr.bg };
+  }).filter(g => g.worth > 0)
+    .sort((a,b) => a.order - b.order); // sheet's Order column, ascending
+
+  // weighted-average return per sleeve, weighted by dollar worth of each position
+  const retBySleeve = new Map();
+  rows.forEach(r => {
+    const sleeve = r.__sleeve;
+    const worth  = parseFloat(r["Worth"]) || 0;
+    const ret    = parseFloat(r["Return"]) || 0;
+    if (!retBySleeve.has(sleeve)) retBySleeve.set(sleeve, { wSum:0, wrSum:0 });
+    const acc = retBySleeve.get(sleeve);
+    acc.wSum  += worth;
+    acc.wrSum += worth * ret;
+  });
+  groups.forEach(g => {
+    const acc = retBySleeve.get(g.name);
+    g.ret = acc && acc.wSum ? acc.wrSum / acc.wSum : 0;
+  });
+
+  const totalWorth   = groups.reduce((s,g)=>s+g.worth,0);
+  const totalCost    = groups.reduce((s,g)=>s+g.cost,0);
+  const totalDivs    = groups.reduce((s,g)=>s+g.divs,0);
+  const totalFees    = groups.reduce((s,g)=>s+g.fees,0);
+  const totalGain    = totalWorth - totalCost;
+  const totalGainPct = totalCost ? (totalGain/totalCost)*100 : 0;
+  const divYield     = totalWorth ? (totalDivs/totalWorth)*100 : 0;
+
+  // Scorecards
+  const sc = document.getElementById('scorecards');
+  sc.innerHTML = '';
+  const cardData = [
+    { label:"Total value",      value:fmtK(totalWorth),  sub:"market value" },
+    { label:"Total invested",   value:fmtK(totalCost),   sub:"cost basis" },
+    { label:"Total gain",       value:(totalGain>=0?'+':'')+fmt$(totalGain),
+                                 sub:(totalGainPct>=0?'+':'')+totalGainPct.toFixed(2)+'%', posNeg:totalGain },
+    { label:"Est. annual divs", value:fmt$(totalDivs),   sub:divYield.toFixed(2)+'% yield' },
+    { label:"Annual fees",      value:fmt$(totalFees),   sub:(totalFees/totalWorth*100).toFixed(3)+'% of AUM' },
+    { label:"Positions",        value:rows.length.toString(), sub:groups.length+' sleeves' },
+  ];
+  cardData.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'card';
+    const subCls = c.posNeg!==undefined?(c.posNeg>=0?'card-sub pos':'card-sub neg'):'card-sub';
+    const valCls = c.posNeg!==undefined?(c.posNeg>=0?'card-value pos':'card-value neg'):'card-value';
+    d.innerHTML = `<div class="card-label">${c.label}</div><div class="${valCls}">${c.value}</div><div class="${subCls}">${c.sub}</div>`;
+    sc.appendChild(d);
+  });
+
+  // Treemap
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  const tip = document.getElementById('tip');
+
+  groups.forEach(g => {
+    const block = document.createElement('div');
+    block.className = 'group-block';
+    block.style.background = g.bg;
+
+    const hdr = document.createElement('div');
+    hdr.className = 'group-header';
+    hdr.innerHTML = `<span class="group-name">${g.name}</span><span class="group-meta">${retStr(g.ret)} &nbsp;·&nbsp; ${(g.weight*100).toFixed(1)}% &nbsp;·&nbsp; $${g.worth.toLocaleString('en-US',{maximumFractionDigits:0})}</span>`;
+    block.appendChild(hdr);
+
+    const row = document.createElement('div');
+    row.className = 'holdings-row' + (g.h.length > 5 ? ' scrollable' : '');
+    const maxP = Math.max(...g.h.map(h=>h.p));
+
+    g.h.forEach(h => {
+      const cell = document.createElement('div');
+      cell.className = 'holding';
+      cell.style.background = g.color;
+      cell.style.opacity = (0.55 + (h.p/maxP)*0.45).toFixed(2);
+      cell.style.flex = h.p.toFixed(2);
+      cell.innerHTML = `<span class="h-ticker">${h.t}</span><span class="h-pct">${h.p.toFixed(2)}%</span>`;
+
+      cell.addEventListener('mouseenter', e => {
+        tip.style.display = 'block';
+        tip.innerHTML = `
+          <div style="font-weight:500;font-size:13px;margin-bottom:3px;">${h.t}</div>
+          <div style="color:var(--color-text-secondary);font-size:11px;margin-bottom:6px;">${g.name}</div>
+          <div style="display:grid;grid-template-columns:auto auto;gap:1px 16px;font-size:12px;">
+            <span style="color:var(--color-text-secondary)">Weight</span><span style="font-weight:500">${h.p.toFixed(2)}%</span>
+            <span style="color:var(--color-text-secondary)">Value</span><span style="font-weight:500">${fmt$(h.w)}</span>
+            <span style="color:var(--color-text-secondary)">Cost basis</span><span style="font-weight:500">${fmt$(h.cost)}</span>
+            <span style="color:var(--color-text-secondary)">Return</span><span style="font-weight:500;color:${h.ret>=0?'#3B6D11':'#A32D2D'}">${h.ret>=0?'+':''}${(h.ret*100).toFixed(2)}%</span>
+            <span style="color:var(--color-text-secondary)">Est. annual divs</span><span style="font-weight:500">${fmt$(h.divs)}</span>
+            <span style="color:var(--color-text-secondary)">Annual fees</span><span style="font-weight:500">${fmt$(h.fees)}</span>
+          </div>`;
+        tip.style.left = (e.clientX+14)+'px';
+        tip.style.top  = (e.clientY-10)+'px';
+      });
+      cell.addEventListener('mousemove', e => {
+        tip.style.left = (e.clientX+14)+'px';
+        tip.style.top  = (e.clientY-10)+'px';
+      });
+      cell.addEventListener('mouseleave', ()=>{ tip.style.display='none'; });
+      row.appendChild(cell);
+    });
+
+    block.appendChild(row);
+    grid.appendChild(block);
+  });
+
+  // Legend
+  document.getElementById('legend').innerHTML = groups.map(g=>
+    `<div class="leg"><span class="leg-dot" style="background:${g.color}"></span>${g.name}</div>`
+  ).join('');
+
+  document.getElementById('divider').style.display = '';
+}
+
+// ── Fetch via Google gviz/tq (no proxy needed) ───────────
+// Reads columns by FIXED POSITION (A-O) rather than by header label text.
+// This sidesteps any gviz auto-header-detection quirks that can cause
+// column labels to come back missing, renamed, or misaligned.
+//   A Description | B Ticker | C Weight | D Shares | E Worth | F Avg Cost
+//   G Div Yield   | H Div Growth | I Type | J Dividend | K Link | L Return
+//   M Account (skip) | N Expense Ratio | O Order
+function gvizToRows(data) {
+  return data.table.rows.map(r => {
+    const c = r.c || [];
+    const val = i => (c[i] ? (c[i].v ?? c[i].f ?? "") : "");
+    return {
+      Description:   val(0),
+      Ticker:        val(1),
+      Weight:        val(2),
+      Shares:        val(3),
+      Worth:         val(4),
+      AvgCost:       val(5),
+      DivYield:      val(6),
+      DivGrowth:     val(7),
+      Type:          val(8),
+      Dividend:      val(9),
+      Link:          val(10),
+      Return:        val(11),
+      Account:       val(12),
+      ExpenseRatio:  val(13),
+      Order:         val(14),
+    };
+  }).filter(r => r["Ticker"] && r["Worth"]);
+}
+
+async function loadData() {
+  const account = ACCOUNTS[activeAccountIdx];
+  const btn    = document.getElementById('refreshBtn');
+  const status = document.getElementById('status');
+  btn.classList.add('loading');
+  status.className = 'status';
+  status.textContent = 'Fetching latest data…';
+
+  try {
+    const callbackName = 'gvizCallback_' + Date.now();
+    const url = `https://docs.google.com/spreadsheets/d/${account.sheetId}/gviz/tq?gid=${account.gid}&tqx=out:json,responseHandler:${callbackName}`;
+
+    const text = await new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      const timer = setTimeout(() => { reject(new Error("Request timed out — is the sheet shared publicly?")); cleanup(); }, 10000);
+      window[callbackName] = (data) => { resolve(data); cleanup(); };
+      function cleanup() { clearTimeout(timer); delete window[callbackName]; document.head.removeChild(script); }
+      script.onerror = () => { reject(new Error("Could not reach Google Sheets — check the sheet is shared (anyone with link can view).")); cleanup(); };
+      script.src = url;
+      document.head.appendChild(script);
+    });
+
+    const rows = gvizToRows(text);
+    if (!rows.length) throw new Error("No data rows found — check the sheet has data on this tab.");
+    console.table(rows); // open browser devtools (F12) → Console to inspect exactly what was read from the sheet
+
+    render(rows);
+    const now = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    document.getElementById('subtitle').textContent = `Live from Google Sheets · Last updated ${now}`;
+    status.textContent = '';
+  } catch (err) {
+    status.className = 'status error';
+    status.textContent = `⚠ ${err.message}`;
+    document.getElementById('subtitle').textContent = 'Live from Google Sheets';
+    if (!document.querySelector('.group-block')) {
+      document.getElementById('grid').innerHTML = `<div style="padding:20px;color:var(--color-text-secondary);font-size:13px;">${err.message}</div>`;
+    }
+  } finally {
+    btn.classList.remove('loading');
+  }
+}
+
+renderTabs();
+if (ACCOUNTS.length === 1) {
+  document.getElementById('pageTitle').textContent = ACCOUNTS[0].name;
+}
+loadData();
+</script>
+</body>
+</html>
