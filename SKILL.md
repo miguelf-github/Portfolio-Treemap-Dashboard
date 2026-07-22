@@ -231,8 +231,8 @@ This is different from "Publish to web". Remind the user of this if they hit aut
 
 ## Reference file — gold standard
 
-`assets/reference_treemap.html` is the **gold standard / ground truth** for this skill. It is
-Miguel's live multi-account (Roth IRA + Traditional IRA) treemap dashboard. When any instruction
+`index.html` is the **gold standard / ground truth** for this skill. It is
+miguelf's live multi-account (Roth IRA + Traditional IRA) treemap dashboard. When any instruction
 above is ambiguous, or a new dashboard needs to match pixel-for-pixel, **defer to this file over
 the prose in this SKILL.md** — copy its CSS, JS, and markup patterns directly rather than
 re-deriving them. Notable patterns in this reference that supersede earlier/simpler examples
