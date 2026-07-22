@@ -55,6 +55,12 @@ Set up a header row (row 1), then row 2 onward is one holding per row. `Q16`
 is a running total cell (see note below) and `R14` is a manual cash-balance
 cell — adjust those references to wherever you keep totals in your own sheet.
  
+### Sheet columns & formulas (row 2 example)
+ 
+Set up a header row (row 1), then row 2 onward is one holding per row. `Q16`
+is a running total cell (see note below) and `R14` is a manual cash-balance
+cell — adjust those references to wherever you keep totals in your own sheet.
+ 
 | Cell | Column | What it is | Formula / value |
 |---|---|---|---|
 | A2 | Description | Sleeve/group name | typed manually |
@@ -72,20 +78,13 @@ cell — adjust those references to wherever you keep totals in your own sheet.
 | M2 | Account | Where it's held (optional, e.g. Robinhood, Fidelity) | typed manually |
 | N2 | Expense Ratio | Annual fee $ (pre-calculated, not a %) | `=IFERROR(E2*0.02%,"")` |
 | O2 | Order | Sort order for sleeve grouping in the dashboard | typed manually, a number |
+
+### Example sheet
  
-**Supporting total cells** (adjust locations to your sheet):
-- `Q16` — total account value used for weighting: `=SUM($E$2:$E)+R14`
-- `R14` — manual entry for any un-invested cash balance in the account
-> The dashboard reads `Expense Ratio` (N) as an already-calculated dollar
-> amount, not a percentage — so don't multiply it again against worth in
-> any downstream formulas.
+A live example of the expected format (anonymized) is here:
+[Test Portfolio For Treemap](https://docs.google.com/spreadsheets/d/1bnqtaC4ly8oTaXhVYTG8IO8bd9UDgrUHu_Qrh71xqrQ/edit?gid=1452301631#gid=1452301631) —
+see the `Roth IRA` and `Traditional IRA` tabs.
 
-
-> ⚠️ **Note on privacy:** this repo is public, so your sheet ID/GID will be
-> visible to anyone who views the source. The actual data is only protected
-> by your Google Sheet's own sharing settings — keep those set to "Anyone
-> with link can view" (read-only) rather than edit access, and don't put
-> anything in the sheet you wouldn't want a determined viewer to see.
 
 ## License
 
