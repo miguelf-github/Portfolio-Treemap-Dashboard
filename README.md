@@ -43,18 +43,8 @@ const ACCOUNTS = [
 Your sheet must be shared as **"Anyone with the link can view"** (Share button —
 not "Publish to web") for the live connection to work.
 
-### Expected columns (A–O)
 
-`Description of Sleeve | Ticker | Weight % | Shares | Position Worth | Position Cost | Div Yield % | Div Growth % | Type (etf/stock/mutf) | Projected Annual Dividend | Stock Analysis Link | Return % | Account name | Expense Ratio | Order by number`
-
-
-### Sheet columns & formulas (row 2 example)
- 
-Set up a header row (row 1), then row 2 onward is one holding per row. `Q16`
-is a running total cell (see note below) and `R14` is a manual cash-balance
-cell — adjust those references to wherever you keep totals in your own sheet.
- 
-### Sheet columns & formulas (row 2 example)
+### Expected columns (A–O) | Sheet columns & formulas (row 2 example)
  
 Set up a header row (row 1), then row 2 onward is one holding per row. `Q16`
 is a running total cell (see note below) and `R14` is a manual cash-balance
