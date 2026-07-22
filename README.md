@@ -9,7 +9,7 @@ scorecards for value, gain, dividends, and fees.
 
 ## 🔴 Live demo
 
-Dashboard live at:
+Sample dashboard live at:
 
 ```
 https://miguelf-github.github.io/Portfolio-Treemap-Dashboard/
