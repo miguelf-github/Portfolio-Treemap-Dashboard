@@ -46,7 +46,7 @@ not "Publish to web") for the live connection to work.
 
 ### Expected columns (A–O)
 
-`Description | Ticker | Weight | Shares | Worth | Avg Cost | Div Yield | Div Growth | Type | Dividend | Link | Return | Account | Expense Ratio | Order`
+`Description of Sleeve | Ticker | Weight % | Shares | Position Worth | Position Cost | Div Yield % | Div Growth % | Type (etf/stock/mutf) | Projected Annual Dividend | Stock Analysis Link | Return % | Account name | Expense Ratio | Order by number`
 
 > ⚠️ **Note on privacy:** this repo is public, so your sheet ID/GID will be
 > visible to anyone who views the source. The actual data is only protected
