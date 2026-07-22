@@ -9,8 +9,7 @@ scorecards for value, gain, dividends, and fees.
 
 ## 🔴 Live demo
 
-Once GitHub Pages is enabled for this repo (Settings → Pages → Deploy from
-branch `main`), your dashboard will be live at:
+Dashboard live at:
 
 ```
 https://miguelf-github.github.io/Portfolio-Treemap-Dashboard/
