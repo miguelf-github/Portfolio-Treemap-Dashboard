@@ -13,7 +13,7 @@ Once GitHub Pages is enabled for this repo (Settings → Pages → Deploy from
 branch `main`), your dashboard will be live at:
 
 ```
-[https://miguelf-github.github.io/portfolio-treemap/](https://miguelf-github.github.io/Portfolio-Treemap-Dashboard/)
+https://miguelf-github.github.io/Portfolio-Treemap-Dashboard/
 ```
 
 ## Features
