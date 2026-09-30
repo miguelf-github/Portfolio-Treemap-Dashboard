@@ -320,6 +320,22 @@ function render(rows) {
   grid.innerHTML = '';
   const tip = document.getElementById('tip');
 
+  // Keep the tooltip fully on-screen: flip to the left of the cursor when it
+  // would overflow the right edge, and clamp vertically within the viewport.
+  function positionTip(e) {
+    const pad = 14;
+    const tw = tip.offsetWidth || 220;
+    const th = tip.offsetHeight || 120;
+    let left = e.clientX + pad;
+    let top = e.clientY - 10;
+    if (left + tw > window.innerWidth - 8) left = e.clientX - tw - pad;
+    if (left < 8) left = 8;
+    if (top + th > window.innerHeight - 8) top = window.innerHeight - th - 8;
+    if (top < 8) top = 8;
+    tip.style.left = left + 'px';
+    tip.style.top = top + 'px';
+  }
+
   groups.forEach(g => {
     const block = document.createElement('div');
     block.className = 'group-block';
@@ -355,12 +371,10 @@ function render(rows) {
             <span style="color:var(--color-text-secondary)">Est. annual divs</span><span style="font-weight:500">${fmt$(h.divs)}</span>
             <span style="color:var(--color-text-secondary)">Annual fees</span><span style="font-weight:500">${fmt$(h.fees)}</span>
           </div>`;
-        tip.style.left = (e.clientX+14)+'px';
-        tip.style.top  = (e.clientY-10)+'px';
+        positionTip(e);
       });
       cell.addEventListener('mousemove', e => {
-        tip.style.left = (e.clientX+14)+'px';
-        tip.style.top  = (e.clientY-10)+'px';
+        positionTip(e);
       });
       cell.addEventListener('mouseleave', ()=>{ tip.style.display='none'; });
       row.appendChild(cell);

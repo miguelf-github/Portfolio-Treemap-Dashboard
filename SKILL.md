@@ -27,7 +27,7 @@ Matches an established design system across all of the user's portfolios.
 - **Group header**: group name · return badge (green/red) · weight % · dollar value
 - **Holding pills**: ticker (13px bold) + weight % (11px muted) stacked. Min-width 52px.
   Opacity scaled by relative weight within the group (0.55–1.0).
-- **Tooltips**: Fixed-position on hover — weight, value, cost basis, return, dividends, fees.
+- **Tooltips**: Fixed-position on hover — weight, value, cost basis, return, dividends, fees. Viewport-aware: flips to the left of the cursor near the right edge and clamps vertically so it never renders off-screen.
 - **Dark mode**: Full CSS variable support via `prefers-color-scheme: dark`.
 - **Colors**: Positive returns → `#7ce3b0` (green). Negative → `#f7a5a5` (red).
   Scorecard gain → `.pos` (`#3B6D11`) or `.neg` (`#A32D2D`).
